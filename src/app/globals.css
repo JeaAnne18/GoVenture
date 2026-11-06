@@ -24,3 +24,14 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.auth-error-toast [data-button] {
+  background-color: #0F5E66 !important;
+  color: white !important;
+  border: none !important;
+}
+
+.auth-error-toast [data-button]:hover {
+  background-color: white !important;
+  color: #0F5E66 !important;
+}

@@ -12,11 +12,78 @@ datasource db {
   provider = "postgresql"
 }
 
-model Travel {
-  id          String   @id @default(cuid())
-  title       String
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  username        String?    @unique
+  name            String?
+  createdAt       DateTime  @default(now())
+  trips           Trip[]
+  emailVerified   Boolean   @default(false)
+  image           String?
+  updatedAt       DateTime  @updatedAt
+  displayUsername String?
+  sessions        Session[]
+  accounts        Account[]
+
+  @@map("user")
+}
+
+model Trip {
+  id          String    @id @default(cuid())
+  name        String
   destination String
-  startDate   DateTime
-  endDate     DateTime
-  createdAt   DateTime @default(now())
+  startDate   DateTime?
+  endDate     DateTime?
+  owner       User      @relation(fields: [ownerId], references: [id])
+  ownerId     String
+  createdAt   DateTime  @default(now())
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
 }
