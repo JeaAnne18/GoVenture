@@ -1,9 +1,15 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import SignOutButton from "@/components/auth/SignOutButton";
+import AppShell from "@/components/AppShell";
 import DashboardSkeleton from "@/components/auth/DashboardSkeleton";
 import UsernameModal from "@/components/auth/UsernameModal";
+import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import NearestTripCard from "@/components/dashboard/NearestTripCard";
+import NotesWidget from "@/components/dashboard/NotesWidget";
+import TripTimeline from "@/components/dashboard/TripTimeline";
+import WhereYouveBeen from "@/components/dashboard/WhereYouveBeen";
+import RecentlySaved from "@/components/dashboard/RecentlySaved";
 
 export default async function HomePage() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -20,11 +26,23 @@ export default async function HomePage() {
     );
   }
 
+  const firstName = session.user.name.split(" ")[0];
+
   return (
-    <main className="mx-auto max-w-xl p-8">
-      <h1 className="text-2xl font-semibold">Hi, {session.user.name}</h1>
-      <p className="mt-1 text-sm text-gray-600">You&apos;re signed in as {session.user.email}.</p>
-      <SignOutButton />
-    </main>
+    <AppShell>
+      <DashboardHeader name={firstName} />
+
+      <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+        <NearestTripCard />
+        <NotesWidget />
+      </div>
+
+      <TripTimeline />
+
+      <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+        <WhereYouveBeen />
+        <RecentlySaved />
+      </div>
+    </AppShell>
   );
 }
