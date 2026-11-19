@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useNewTrip } from "@/components/trips/NewTripProvider";
 import {
   Bookmark,
   CircleHelp,
@@ -65,19 +66,24 @@ function NavLink({ href, label, icon: Icon, collapsed, onNavigate }: NavLinkProp
 type ContentProps = { collapsed: boolean; header: ReactNode; onNavigate?: () => void };
 
 function SidebarContent({ collapsed, header, onNavigate }: ContentProps) {
+  const { openNewTrip } = useNewTrip();
+
   return (
     <>
       {header}
 
-      <Link
-        href="/trips/new"
-        onClick={onNavigate}
+      <button
+        type="button"
+        onClick={() => {
+          onNavigate?.();
+          openNewTrip();
+        }}
         title={collapsed ? "New Trip" : undefined}
         className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-[#0F5E66] text-sm font-medium text-white transition hover:bg-[#0F5E66]/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0F5E66]"
       >
         <Plus className="size-4 shrink-0" aria-hidden />
         <span className={collapsed ? "sr-only" : ""}>New Trip</span>
-      </Link>
+      </button>
 
       <nav aria-label="Main" className="flex flex-col gap-1">
         {main.map((l) => (

@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { Menu } from "lucide-react";
 import Sidebar from "./Sidebar";
+import { NewTripProvider } from "./trips/NewTripProvider";
 
 type Props = {
   children: ReactNode;
@@ -15,6 +16,7 @@ export default function AppShell({ children, bleed = false }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
+    <NewTripProvider>
     <div className="flex min-h-screen bg-[#EEEAF8] text-[#2B2D33]">
       <Sidebar
         collapsed={collapsed}
@@ -38,5 +40,6 @@ export default function AppShell({ children, bleed = false }: Props) {
         </div>
       </main>
     </div>
+    </NewTripProvider>
   );
 }
