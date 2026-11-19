@@ -10,6 +10,7 @@ import NotesWidget from "@/components/dashboard/NotesWidget";
 import TripTimeline from "@/components/dashboard/TripTimeline";
 import WhereYouveBeen from "@/components/dashboard/WhereYouveBeen";
 import RecentlySaved from "@/components/dashboard/RecentlySaved";
+import { prisma } from "@/lib/prisma";
 
 export default async function HomePage() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -27,6 +28,23 @@ export default async function HomePage() {
   }
 
   const firstName = session.user.name.split(" ")[0];
+  const rows = await prisma.savedPlace.findMany({
+    where: { userId: session.user.id },
+    include: { place: true },
+    orderBy: { createdAt: "desc" },
+    take: 4,
+  });
+
+  const recent = rows.map((r) => ({
+    id: r.id,
+    name: r.place.name,
+    detail: [
+      r.place.category,
+      r.place.address?.split(",").at(-1)?.trim() ?? "",
+    ]
+      .filter(Boolean)
+      .join(", "),
+  }));
 
   return (
     <AppShell>
@@ -41,7 +59,7 @@ export default async function HomePage() {
 
       <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
         <WhereYouveBeen />
-        <RecentlySaved />
+        <RecentlySaved places={recent} />
       </div>
     </AppShell>
   );

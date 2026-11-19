@@ -4,7 +4,13 @@ import { useState, type ReactNode } from "react";
 import { Menu } from "lucide-react";
 import Sidebar from "./Sidebar";
 
-export default function AppShell({ children }: { children: ReactNode }) {
+type Props = {
+  children: ReactNode;
+  // bleed = no padding, so a page (like the map) can fill the whole area next to the sidebar
+  bleed?: boolean;
+};
+
+export default function AppShell({ children, bleed = false }: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -16,14 +22,15 @@ export default function AppShell({ children }: { children: ReactNode }) {
         mobileOpen={mobileOpen}
         onCloseMobile={() => setMobileOpen(false)}
       />
-      <main className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
-        {/* No narrow max-width: the dashboard stretches with the screen, up to ultrawide sizes. */}
-        <div className="mx-auto w-full max-w-[1800px] space-y-6">
+      <main className={bleed ? "relative min-w-0 flex-1" : "min-w-0 flex-1 p-4 sm:p-6 lg:p-8"}>
+        <div className={bleed ? "" : "mx-auto w-full max-w-[1800px] space-y-6"}>
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
             aria-label="Open menu"
-            className="grid size-11 place-items-center rounded-xl bg-white shadow-sm md:hidden"
+            className={`grid size-11 place-items-center rounded-xl bg-white shadow-sm md:hidden ${
+              bleed ? "absolute left-3 top-3 z-30" : ""
+            }`}
           >
             <Menu className="size-5" aria-hidden />
           </button>
