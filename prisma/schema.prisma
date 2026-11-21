@@ -12,11 +12,155 @@ datasource db {
   provider = "postgresql"
 }
 
-model Travel {
-  id          String   @id @default(cuid())
-  title       String
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  username        String?    @unique
+  name            String?
+  createdAt       DateTime  @default(now())
+  trips           Trip[]
+  emailVerified   Boolean   @default(false)
+  image           String?
+  updatedAt       DateTime  @updatedAt
+  displayUsername String?
+  sessions        Session[]
+  accounts        Account[]
+  savedPlaces     SavedPlace[]
+  tripMemberships TripMember[]
+
+  @@map("user")
+}
+
+model Trip {
+  id          String    @id @default(cuid())
+  name        String
   destination String
-  startDate   DateTime
-  endDate     DateTime
-  createdAt   DateTime @default(now())
+  startDate   DateTime?
+  endDate     DateTime?
+  owner       User      @relation(fields: [ownerId], references: [id])
+  ownerId     String
+  createdAt   DateTime  @default(now())
+  destLat     Float?
+  destLng     Float?
+  dayCount    Int       @default(1)
+  members     TripMember[]
+  items       ItineraryItem[]
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+model Place {
+  id         String       @id @default(cuid())
+  externalId String       @unique
+  name       String
+  address    String?
+  lat        Float
+  lng        Float
+  category   String?
+  savedBy    SavedPlace[]
+  items      ItineraryItem[]
+}
+
+model SavedPlace {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  place     Place    @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  placeId   String
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  compare   Json?
+
+  @@unique([userId, placeId])
+}
+
+enum MemberRole {
+  EDITOR
+  VIEWER
+}
+
+enum MemberStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+enum ItemKind {
+  STOP
+  NOTE
+}
+
+model TripMember {
+  id        String       @id @default(cuid())
+  trip      Trip         @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  tripId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  role      MemberRole   @default(EDITOR)
+  status    MemberStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+
+  @@unique([tripId, userId])
+}
+
+model ItineraryItem {
+  id        String   @id @default(cuid())
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  tripId    String
+  day       Int
+  position  Int
+  kind      ItemKind
+  text      String?
+  place     Place?   @relation(fields: [placeId], references: [id])
+  placeId   String?
+  createdAt DateTime @default(now())
+
+  @@index([tripId, day, position])
 }
