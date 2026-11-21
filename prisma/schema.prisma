@@ -25,7 +25,8 @@ model User {
   displayUsername String?
   sessions        Session[]
   accounts        Account[]
-  savedPlaces SavedPlace[]
+  savedPlaces     SavedPlace[]
+  tripMemberships TripMember[]
 
   @@map("user")
 }
@@ -41,6 +42,9 @@ model Trip {
   createdAt   DateTime  @default(now())
   destLat     Float?
   destLng     Float?
+  dayCount    Int       @default(1)
+  members     TripMember[]
+  items       ItineraryItem[]
 }
 
 model Session {
@@ -100,6 +104,7 @@ model Place {
   lng        Float
   category   String?
   savedBy    SavedPlace[]
+  items      ItineraryItem[]
 }
 
 model SavedPlace {
@@ -114,4 +119,48 @@ model SavedPlace {
   compare   Json?
 
   @@unique([userId, placeId])
+}
+
+enum MemberRole {
+  EDITOR
+  VIEWER
+}
+
+enum MemberStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+enum ItemKind {
+  STOP
+  NOTE
+}
+
+model TripMember {
+  id        String       @id @default(cuid())
+  trip      Trip         @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  tripId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  role      MemberRole   @default(EDITOR)
+  status    MemberStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+
+  @@unique([tripId, userId])
+}
+
+model ItineraryItem {
+  id        String   @id @default(cuid())
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  tripId    String
+  day       Int
+  position  Int
+  kind      ItemKind
+  text      String?
+  place     Place?   @relation(fields: [placeId], references: [id])
+  placeId   String?
+  createdAt DateTime @default(now())
+
+  @@index([tripId, day, position])
 }

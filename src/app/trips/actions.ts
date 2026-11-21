@@ -15,6 +15,7 @@ export type CreateTripInput = {
   destLng: number | null;
   startDate: string | null; // "2026-12-12"
   endDate: string | null;
+  inviteUserIds: string[]; // GoVenture users to invite
 };
 
 export type CreateTripResult = { ok: true; id: string } | { ok: false; error: string };
@@ -22,6 +23,7 @@ export type CreateTripResult = { ok: true; id: string } | { ok: false; error: st
 export async function createTrip(input: CreateTripInput): Promise<CreateTripResult> {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) return { ok: false, error: "Please sign in again." };
+  const userId = session.user.id;
 
   // Never trust the browser: check everything again on the server.
   const name = input.name.trim();
@@ -31,6 +33,7 @@ export async function createTrip(input: CreateTripInput): Promise<CreateTripResu
 
   let startDate: Date | null = null;
   let endDate: Date | null = null;
+  let dayCount = 1;
   if (input.startDate || input.endDate) {
     if (!input.startDate || !input.endDate || !DAY.test(input.startDate) || !DAY.test(input.endDate)) {
       return { ok: false, error: "Pick both a start date and an end date." };
@@ -40,16 +43,29 @@ export async function createTrip(input: CreateTripInput): Promise<CreateTripResu
     if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()) || endDate < startDate) {
       return { ok: false, error: "The end date can’t be before the start date." };
     }
-    if ((endDate.getTime() - startDate.getTime()) / DAY_MS + 1 > 90) {
-      return { ok: false, error: "Trips can be up to 90 days long." };
-    }
+    dayCount = (endDate.getTime() - startDate.getTime()) / DAY_MS + 1;
+    if (dayCount > 90) return { ok: false, error: "Trips can be up to 90 days long." };
   }
 
   const destLat = input.destLat !== null && Number.isFinite(input.destLat) ? input.destLat : null;
   const destLng = input.destLng !== null && Number.isFinite(input.destLng) ? input.destLng : null;
 
+  // Only invite people who really have an account (and never yourself).
+  const wanted = [...new Set(input.inviteUserIds)].filter((id) => id !== userId).slice(0, 20);
+  const invitees = wanted.length ? await prisma.user.findMany({ where: { id: { in: wanted } }, select: { id: true } }) : [];
+
   const trip = await prisma.trip.create({
-    data: { name, destination, destLat, destLng, startDate, endDate, ownerId: session.user.id },
+    data: {
+      name,
+      destination,
+      destLat,
+      destLng,
+      startDate,
+      endDate,
+      dayCount,
+      ownerId: userId,
+      members: { create: invitees.map((u) => ({ userId: u.id, role: "EDITOR" as const, status: "PENDING" as const })) },
+    },
   });
 
   revalidatePath("/trips");

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { MapPin } from "lucide-react";
 import { formatTripDates, tripLength, tripStatus } from "@/lib/trips";
 
@@ -17,7 +18,8 @@ export default function TripCard({ trip }: Props) {
   const days = tripLength(trip.startDate, trip.endDate);
 
   return (
-    <article className="flex flex-col overflow-hidden rounded-[28px] bg-white shadow-[0_8px_24px_-12px_rgba(15,94,102,0.18)]">
+    <Link href={`/trips/${trip.id}`} className="block rounded-[28px] transition hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0F5E66]">
+    <article className="flex h-full flex-col overflow-hidden rounded-[28px] bg-white shadow-[0_8px_24px_-12px_rgba(15,94,102,0.18)]">
       <div className="flex h-28 items-end bg-gradient-to-br from-[#0F5E66] to-[#2A8790] p-5 text-white">
         <p className="flex items-center gap-2 text-lg font-semibold leading-tight">
           <MapPin className="size-5 shrink-0 text-[#F28C38]" aria-hidden />
@@ -33,5 +35,6 @@ export default function TripCard({ trip }: Props) {
         <span className={`mt-auto w-fit rounded-full px-3 py-1 text-xs font-medium ${tone[status.tone]}`}>{status.label}</span>
       </div>
     </article>
+    </Link>
   );
 }

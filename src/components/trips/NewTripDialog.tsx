@@ -4,8 +4,9 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { toast } from "sonner";
-import PlaceSearch from "@/app/explore/PlaceSearch"; // change this path if your PlaceSearch lives somewhere else
+import PlaceSearch from "@/app/explore/PlaceSearch"; 
 import RangeCalendar from "./RangeCalendar";
+import InvitePicker, { type InviteUser } from "./InvitePicker";
 import { createTrip } from "@/app/trips/actions";
 import { countDays, destinationLabel, formatDay } from "@/lib/trips";
 import type { PlaceInfo } from "@/lib/places";
@@ -17,6 +18,7 @@ function NewTripForm({ onClose }: { onClose: () => void }) {
   const [start, setStart] = useState<string | null>(null);
   const [end, setEnd] = useState<string | null>(null);
   const [unknownDates, setUnknownDates] = useState(false);
+  const [invites, setInvites] = useState<InviteUser[]>([]);
   const [saving, setSaving] = useState(false);
 
   const noBias = useCallback(() => null, []);
@@ -42,6 +44,7 @@ function NewTripForm({ onClose }: { onClose: () => void }) {
       destLng: place.lng,
       startDate: unknownDates ? null : start,
       endDate: unknownDates ? null : end,
+      inviteUserIds: invites.map((u) => u.id),
     });
 
     if (!result.ok) {
@@ -51,7 +54,7 @@ function NewTripForm({ onClose }: { onClose: () => void }) {
     }
     toast.success("Trip created");
     onClose();
-    router.push("/trips");
+    router.push(`/trips/${result.id}`); // straight into the planner
   }
 
   const readOnlyField =
@@ -121,6 +124,11 @@ function NewTripForm({ onClose }: { onClose: () => void }) {
             />
             I don’t know the dates yet
           </label>
+
+          <div className="flex flex-col gap-1.5 text-[13px] text-[#5F6370]">
+            <span>Invite travel companions (optional)</span>
+            <InvitePicker value={invites} onChange={setInvites} dropUp />
+          </div>
         </div>
 
         <div>
